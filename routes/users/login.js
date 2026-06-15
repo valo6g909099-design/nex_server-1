@@ -65,10 +65,13 @@ async function login(req, res) {
     { expiresIn: tokenExpiry },
   );
 
+  const isProduction = process.env.NODE_ENV === "production";
+ 
+  
   res.cookie("token", token, {
     httpOnly: false,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: isProduction,                          
+    sameSite: isProduction ? "none" : "lax",     
     maxAge: cookieExpiry,
   });
 
