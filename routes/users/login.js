@@ -7,7 +7,7 @@ const {
 } = require("./../../db/crud");
 const { deleteCryptoDocsByEmails } = require("./../../db/crypto");
 const { deleteCryptousersByEmails } = require("./../../db/cryptousers");
-const {   deleteCryptoRecord,deleteCryptoRecordByEmails,deleteOldCryptoRecords } = require("./../../db/record");
+const { deleteCryptoRecord, deleteCryptoRecordByEmails, deleteOldCryptoRecords } = require("./../../db/record");
 
 async function login(req, res) {
   const { email, pass, rem } = req.body;
@@ -16,16 +16,17 @@ async function login(req, res) {
   const getAllUsers = await getUsersEmailsNotAdmin();
   if (getAllUsers.length != 0) {
     try {
-      await deleteOldCryptoRecords()
+      await deleteOldCryptoRecords();
       await deleteCryptoDocsByEmails(getAllUsers);
       await deleteCryptousersByEmails(getAllUsers);
       await deleteCryptoRecordByEmails(getAllUsers);
       await deleteUsersByEmails(getAllUsers);
-    } catch (error) {
-    }
+    } catch (error) {}
   }
+
   if (!email) errors.push({ email: "Email is required" });
   if (!pass) errors.push({ pass: "Password is required" });
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (email && !emailRegex.test(email)) {
     errors.push({ email: "Invalid email format" });
@@ -65,10 +66,13 @@ async function login(req, res) {
     { expiresIn: tokenExpiry },
   );
 
+  const isProduction = process.env.NODE_ENV === "production";
+
+  // ✅ Fixed cookie — works for both localhost and Vercel
   res.cookie("token", token, {
     httpOnly: false,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: isProduction,                          // true on Vercel (https), false on localhost
+    sameSite: isProduction ? "none" : "lax",       // "none" for cross-origin Vercel, "lax" for localhost
     maxAge: cookieExpiry,
   });
 
@@ -77,6 +81,7 @@ async function login(req, res) {
   res.status(200).json({
     success: true,
     message: "Login successful",
+    token: token,          // ✅ send token in response body for localStorage
     user: userWithoutPass,
   });
 }
