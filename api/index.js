@@ -8,7 +8,7 @@ const cryptoRoutes = require("../routes/crypto/crypto");
 const app = express();
 app.use(
   cors({
-    origin: "*",
+    origin: "https://nex-client-kappa.vercel.app",
     credentials: true,
   }),
 );
